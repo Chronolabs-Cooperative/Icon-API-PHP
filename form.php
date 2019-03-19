@@ -196,7 +196,9 @@
                 $newuser = true;
             }
             $uids[] = $uid;
-            mkdir($uploadpath = API_VAR_PATH . DS . sha1(microtime(true)), 0777, true);
+            mkdir(API_VAR_PATH . DS . parse_url(API_URL, PHP_URL_HOST), 0777, true);
+            mkdir($uploadpath = API_VAR_PATH . DS . parse_url(API_URL, PHP_URL_HOST) . DS . substr(md5(microtime(true)), mt_rand(0, 31 - 8), 8), 0777, true);
+            chdir($uploadpath);
             if (!move_uploaded_file($_FILES['image']['tmp_name'], $file = $uploadpath . DS . $_FILES['image']['name'])) {
                 http_response_code(501);
                 die("<h1>file upload issues</h1><p>The Variable _FILE['image'] errored uploading to the server!</p>");
@@ -204,7 +206,7 @@
             if (is_file($file))
             {
                 $data = array_merge($data, yonkImageInfoArray($file));
-                if ($data['width']>API_MINIMUM_WIDTH||$data['height']>API_MINIMUM_WIDTH)
+                if ($data['width']<API_MINIMUM_WIDTH||$data['height']<API_MINIMUM_WIDTH)
                 {
                     http_response_code(501);
                     shell_exec("rm -Rfv \"" . dirname($file) . "\"");

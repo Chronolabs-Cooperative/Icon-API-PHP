@@ -22,20 +22,20 @@
 require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'class'  . DIRECTORY_SEPARATOR . 'xcp' . DIRECTORY_SEPARATOR . 'xcp.class.php';
 require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'class'  . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'apicache.php';
 
-function yonkCacheKey($unixname = '', $width = 128, $format = 'png', $mode = 'icon', $variable = '', $extra = '')
+function yonkCacheKey($unixname = '', $width = 128, $format = 'png', $mode = 'icon', $variable = '', $extra = '', $version = '0.0.0.0')
 {
     
     if (!$sessions = APICache::read('cache-sessions'))
         $sessions = array();
         
-    if (!isset($sessions[$unixname]['seed']) && !isset($sessions[$unixname]['caches']))
-        $sessions[$unixname]['seed'] = mt_rand(0, 255);
+    if (!isset($sessions[$unixname . '--' . $version]['seed']) && !isset($sessions[$unixname]['caches']))
+        $sessions[$unixname . '--' . $version]['seed'] = mt_rand(0, 255);
         
-    if (!isset($sessions[$unixname]['length']) && !isset($sessions[$unixname]['caches']))
-        $sessions[$unixname]['length'] = mt_rand(5, 7);
-        
-    if (!isset($sessions[$unixname]['caches']))
-        $sessions[$unixname]['caches'] = array();
+    if (!isset($sessions[$unixname . '--' . $version]['length']) && !isset($sessions[$unixname]['caches']))
+        $sessions[$unixname . '--' . $version]['length'] = mt_rand(5, 7);
+
+    if (!isset($sessions[$unixname . '--' . $version]['caches']))
+        $sessions[$unixname . '--' . $version]['caches'] = array();
 
     APICache::write('cache-sessions', $sessions, API_CACHE_SESSIONS);
     
@@ -43,13 +43,13 @@ function yonkCacheKey($unixname = '', $width = 128, $format = 'png', $mode = 'ic
     {
         default:
         case "icon":
-            $result = $unixname . '-' . $width . 'x' . $width . '-' . $format . '-' . $mode . (!empty($variable)?"-$variable":"");
+            $result = $unixname . '--' . $version . '-' . $width . 'x' . $width . '-' . $format . '-' . $mode . (!empty($variable)?"-$variable":"");
             break;
     }
     
     if (!empty($extra))
     {
-        $xcp = new xcp($extra, $sessions[$unixname]['seed'], $sessions[$unixname]['length']);
+        $xcp = new xcp($extra, $sessions[$unixname . '--' . $version]['seed'], $sessions[$unixname . '--' . $version]['length']);
         $result .= '-' . $xcp->calc($extra);
     }
     
@@ -57,37 +57,37 @@ function yonkCacheKey($unixname = '', $width = 128, $format = 'png', $mode = 'ic
 }
 
 
-function yonkFilename($unixname = '', $width = 128, $format = 'png', $mode = 'icon', $variable = '', $extra = '')
+function yonkFilename($unixname = '', $width = 128, $format = 'png', $mode = 'icon', $variable = '', $extra = '', $version = '0.0.0.0')
 {
     
     if (!$sessions = APICache::read('cache-sessions'))
         $sessions = array();
     
-    if (!isset($sessions[$unixname]['seed']) && !isset($sessions[$unixname]['caches']))
-        $sessions[$unixname]['seed'] = mt_rand(0, 255);
+    if (!isset($sessions[$version . '--' . $unixname]['seed']) && !isset($sessions[$unixname]['caches']))
+        $sessions[$version . '--' . $unixname]['seed'] = mt_rand(0, 255);
             
-    if (!isset($sessions[$unixname]['length']) && !isset($sessions[$unixname]['caches']))
-        $sessions[$unixname]['length'] = mt_rand(5, 7);
+    if (!isset($sessions[$version . '--' . $unixname]['length']) && !isset($sessions[$unixname]['caches']))
+        $sessions[$version . '--' . $unixname]['length'] = mt_rand(5, 7);
             
-    if (!isset($sessions[$unixname]['caches']))
-        $sessions[$unixname]['caches'] = array();
+    if (!isset($sessions[$version . '--' . $unixname]['caches']))
+        $sessions[$version . '--' . $unixname]['caches'] = array();
                     
     APICache::write('cache-sessions', $sessions, API_CACHE_SESSIONS);
                     
     switch ($mode)
     {
         default:
-            $result = $unixname . '-' . $width . 'x' . $width . '-' . $mode . (!empty($variable)?"-$variable":"");
+            $result = ($version != '0.0.0.0' ? $version: "") . '--'  . $unixname . '-' . $width . 'x' . $width . '-' . $mode . (!empty($variable)?"-$variable":"");
             break;
             
         case "icon":
-            $result = $unixname . '-' . $width . 'x' . $width ;
+            $result = ($version != '0.0.0.0' ? $version: "") . '--' . $unixname . '-' . $width . 'x' . $width ;
             break;
     }
     
     if (!empty($extra))
     {
-        $xcp = new xcp($extra, $sessions[$unixname]['seed'], $sessions[$unixname]['length']);
+        $xcp = new xcp($extra, $sessions[$version . '--' . $unixname]['seed'], $sessions[$version . '--' . $unixname]['length']);
         $result .= '-' . $xcp->calc($extra);
     }
     
@@ -115,6 +115,326 @@ function yonkImageURL($unixname = '', $width = 128, $format = 'png', $mode = 'ic
     return $result;
 }
 
+
+function yonkImageVersionURL($unixname = '', $width = 128, $format = 'png', $version = '1.0.0.1', $mode = 'icon', $variable = '', $extra = '')
+{
+    switch ($mode)
+    {
+        default:
+            $result = API_URL . '/v1/' . $unixname . '--' . $version . '/' . $width . '/' . $mode . (!empty($variable)?"-$variable":"");
+            break;
+    }
+    
+    $result .= '.' . $format;
+    
+    if (!empty($extra))
+    {
+        $result .= '?extra=' . urlencode($extra);
+    }
+    
+    return $result;
+}
+
+function yonkDisplayBytes($bytes = 0)
+{
+    $result = array();
+    $scale = array();
+    $scale['tb'] = 1024 * 1024 * 1024 * 1024 * 1024;
+    $scale['gb'] = 1024 * 1024 * 1024 * 1024;
+    $scale['mb'] = 1024 * 1024 * 1024;
+    $scale['kb'] = 1024 * 1024;
+    
+    foreach($scale as $measure => $weight){
+        if ($bytes / $weight > 1) {
+            $parts = explode('.', $bytes / $weight);
+            $result[$measure] = $parts[0] . $measure;
+            $bytes = ((float)"0." . $parts[1]) * $weight;
+        }
+    }
+    
+    if (count($result))
+        return implode(' ', $result);
+    return $bytes . ' bytes';
+}
+
+function yonkUnixnameAllVersions($unixname = '')
+{
+    $results = array();
+    $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'originals')) as `key`, concat(`major`, '.', `minor`, '.', `revision`, '.', `subrevision`) as `version` FROM `" . $GLOBALS['APIDB']->prefix('originals') . '` WHERE `unixname` LIKE "' . $unixname . '" ORDER BY `major` DESC, `minor` DESC, `revision` DESC, `subrevision` DESC';
+    $result = $GLOBALS['APIDB']->queryF($sql);
+    while($row = $GLOBALS['APIDB']->fetchArray($result))
+    {
+        $id = $row['id'];
+        unset($row['id']);
+        $versioning = str_replace('.', '-', $row['version']);
+        $results['version-'.$versioning] = $row;
+        unset($results['version-'.$versioning]['image-id']);
+        $results['version-'.$versioning]['email'] = checkEmail($results['version-'.$versioning]['email'], true);
+        unset($results['version-'.$versioning]['emailings']);
+        foreach(array_merge(array($results['version-'.$versioning]['uid']), unserialize($results['version-'.$versioning]['uids'], true)) as $uid)
+            $results['version-'.$versioning]['user-keys'][] = md5($uid . API_URL . 'users');
+        unset($results['version-'.$versioning]['uid']);
+        unset($results['version-'.$versioning]['uids']);
+        if ($results['version-'.$versioning]['collection-id']<>0) {
+            $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'collections')) as `key`  FROM `" . $GLOBALS['APIDB']->prefix('collections') . '` WHERE `id` = "' . $row['collection-id'] . '"';
+            $results['version-'.$versioning]['collection'] = $GLOBALS['APIDB']->fetchArray($GLOBALS['APIDB']->queryF($sql));
+            $results['version-'.$versioning]['collection']['email'] = checkEmail($results['version-'.$versioning]['collection']['email'], true);
+            unset($results['version-'.$versioning]['collection']['emailings']);
+            unset($results['version-'.$versioning]['collection']['id']);
+            if ($results['version-'.$versioning]['collection']['pid']<>0)
+                $results['version-'.$versioning]['collection']['parent-key'] = md5($results['version-'.$versioning]['collection']['pid'] . API_URL . 'collections');
+            unset($results['version-'.$versioning]['collection']['pid']);
+            foreach(array_merge(array($results['version-'.$versioning]['collection']['uid']), unserialize($results['version-'.$versioning]['collection']['uids'])) as $uid)
+                $results['version-'.$versioning]['collection']['user-keys'][] = md5($uid . API_URL . 'users');
+            $results['version-'.$versioning]['collection']['user-keys'] = array_unique($results['version-'.$versioning]['collection']['user-keys']);
+            unset($results['version-'.$versioning]['collection']['uid']);
+            unset($results['version-'.$versioning]['collection']['uids']);
+            foreach(unserialize($results['version-'.$versioning]['collection']['oids']) as $oid)
+                $results['version-'.$versioning]['collection']['original-keys'][] = md5($oid . API_URL . 'originals');
+            unset($results['version-'.$versioning]['collection']['oids']);
+            $results['version-'.$versioning]['collection']['original-keys'] = array_unique($results['version-'.$versioning]['collection']['original-keys']);
+        }
+        unset($results['version-'.$versioning]['collection-id']);
+        if ($row['format-id']<>0) {
+            $results['version-'.$versioning]['format'] = yonkFormatsDetails($row['format-id']);
+        }
+        unset($results['version-'.$versioning]['format-id']);
+        $sql = "SELECT * FROM `" . $GLOBALS['APIDB']->prefix('users_originals') . '` WHERE `original-id` = "' . $id . '"';
+        $userresult = $GLOBALS['APIDB']->queryF($sql);
+        while($useroriginal = $GLOBALS['APIDB']->fetchArray($userresult))
+        {
+            if ($useroriginal['uid'] <> 0 )
+            {
+                $sql = "SELECT *, md5(concat(`uid`, '" . API_URL . "', 'users')) as `key` FROM `" . $GLOBALS['APIDB']->prefix('users') . '` WHERE `uid` = "' . $useroriginal['uid'] . '"';
+                $user = $GLOBALS['APIDB']->fetchArray($GLOBALS['APIDB']->queryF($sql));
+                unset($user['uid']);
+                $results['version-'.$versioning]['users'][$user['uname']][sef($user['name'])] = $user;
+                $results['version-'.$versioning]['users'][$user['uname']][sef($user['name'])]['email'] = checkEmail($results['version-'.$versioning]['users'][$user['uname']][sef($user['name'])]['email'], true);
+                unset($results['version-'.$versioning]['users'][$user['uname']][sef($user['name'])]['pass']);
+                unset($results['version-'.$versioning]['users'][$user['uname']][sef($user['name'])]['actkey']);
+            }
+        }
+    }
+    return $results;
+}
+
+function yonkUserDetails($userkey = '')
+{
+    $sql = "SELECT *, md5(concat(`uid`, '" . API_URL . "', 'users')) as `key` FROM `" . $GLOBALS['APIDB']->prefix('users') . '` WHERE md5(concat(`uid`, "' . API_URL . '", "users")) LIKE "' . $userkey . '"';
+    $user = $GLOBALS['APIDB']->fetchArray($GLOBALS['APIDB']->queryF($sql));
+    $sql = "SELECT * FROM `" . $GLOBALS['APIDB']->prefix('users_originals') . '` WHERE `uid` = "' . $user['uid'] . '"';
+    $userresult = $GLOBALS['APIDB']->queryF($sql);
+    while($useroriginal = $GLOBALS['APIDB']->fetchArray($userresult))
+    {
+        if ($useroriginal['original-id'] <> 0 )
+        {
+            $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'originals')) as `key`, concat(`major`, '.', `minor`, '.', `revision`, '.', `subrevision`) as `version` FROM `" . $GLOBALS['APIDB']->prefix('originals') . '` WHERE `id` = "' . $useroriginal['original-id'] . '"';
+            $original = $GLOBALS['APIDB']->fetchArray($GLOBALS['APIDB']->queryF($sql));
+            $versioning = str_replace('.', '-', $original['version']);
+            $user['originals'][$original['unixname']]['version-'.$versioning] = $original;
+            $user['originals'][$original['unixname']]['version-'.$versioning]['email'] = checkEmail($user['originals'][$original['unixname']]['version-'.$versioning]['email'], true);
+            foreach(array_merge(array($user['originals'][$original['unixname']]['version-'.$versioning]['uid']), unserialize($user['originals'][$original['unixname']]['version-'.$versioning]['uids'], true)) as $uid)
+                $user['originals'][$original['unixname']]['version-'.$versioning]['users'][] = md5($uid . API_URL . 'users');
+            unset($user['originals'][$original['unixname']]['version-'.$versioning]['uid']);
+            unset($user['originals'][$original['unixname']]['version-'.$versioning]['uids']);
+            unset($user['originals'][$original['unixname']]['version-'.$versioning]['id']);
+            unset($user['originals'][$original['unixname']]['version-'.$versioning]['image-id']);
+            $user['originals'][$original['unixname']]['version-'.str_replace('.', '-', $$original['version'])]['email'] = checkEmail($user['originals'][$original['unixname']]['version-'.$versioning]['email'], true);
+            unset($user['originals'][$original['unixname']]['version-'.$versioning]['emailings']);
+            if ($user['originals'][$original['unixname']]['version-'.$versioning]['collection-id']<>0) {
+                $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'collections')) as `key`  FROM `" . $GLOBALS['APIDB']->prefix('collections') . '` WHERE `id` = "' . $user['originals'][$original['unixname']]['version-'.$versioning]['collection-id'] . '"';
+                $user['originals'][$original['unixname']]['version-'.$versioning]['collection'] = $GLOBALS['APIDB']->fetchArray($GLOBALS['APIDB']->queryF($sql));
+                $user['originals'][$original['unixname']]['version-'.$versioning]['collection']['email'] = checkEmail($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['email'], true);
+                unset($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['emailings']);
+                unset($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['id']);
+                if ($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['pid']<>0)
+                    $user['originals'][$original['unixname']]['version-'.$versioning]['collection']['parent-key'] = md5($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['pid'] . API_URL . 'collections');
+                unset($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['pid']);
+                foreach(array_merge(array($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['uid']), unserialize($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['uids'])) as $uid)
+                    $user['originals'][$original['unixname']]['version-'.$versioning]['collection']['user-keys'][] = md5($uid . API_URL . 'users');
+                $user['originals'][$original['unixname']]['version-'.$versioning]['collection']['user-keys'] = array_unique($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['user-keys']);
+                unset($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['uid']);
+                unset($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['uids']);
+                foreach(unserialize($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['oids']) as $oid)
+                    $user['originals'][$original['unixname']]['version-'.$versioning]['collection']['original-keys'][] = md5($oid . API_URL . 'originals');
+                unset($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['oids']);
+                $user['originals'][$original['unixname']]['version-'.$versioning]['collection']['original-keys'] = array_unique($user['originals'][$original['unixname']]['version-'.$versioning]['collection']['original-keys']);
+            }
+            unset($user['originals'][$original['unixname']]['version-'.$versioning]['collection-id']);
+            if ($user['originals'][$original['unixname']]['version-'.$versioning]['format-id']<>0) {
+                $user['originals'][$original['unixname']]['version-'.$versioning]['format'] = yonkFormatsDetails($user['originals'][$original['unixname']]['version-'.$versioning]['format-id']);
+                unset($user['originals'][$original['unixname']]['version-'.$versioning]['format']['id']);
+            }
+            unset($user['originals'][$original['unixname']]['version-'.$versioning]['format-id']);
+            if (isset($user['originals'][$original['unixname']]['version-']))
+                unset($user['originals'][$original['unixname']]['version-']);
+        }
+    }
+    $user['email'] = checkEmail($user['email'], true);
+    unset($user['uid']);
+    unset($user['pass']);
+    unset($user['actkey']);
+    return $user;
+}
+
+
+/**
+ * validateMD5()
+ * Validates an MD5 Checksum
+ *
+ * @param string $email
+ * @return boolean
+ */
+
+if (!function_exists("validateMD5")) {
+    function validateMD5($md5) {
+        if(preg_match("/^[a-f0-9]{32}$/i", $md5)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+function yonkFormatsDetails($formatid = 0) {
+    $results = array();
+    if ($formatid == 0)
+        $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'formats')) as `key` FROM `" . $GLOBALS['APIDB']->prefix('formats') . '` WHERE 1 = 1 ORDER BY `extension` ASC';
+    elseif ($formatid != 0 && is_numeric($formatid) && !is_string($formatid))
+        $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'formats')) as `key` FROM `" . $GLOBALS['APIDB']->prefix('formats') . '` WHERE `id` = ' . $formatid . ' ORDER BY `extension` ASC';
+    elseif (validateMD5($formatid))
+        $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'formats')) as `key` FROM `" . $GLOBALS['APIDB']->prefix('formats') . '` WHERE md5(concat(`id`, "' . API_URL . '", "formats")) LIKE "' . $formatid . '" ORDER BY `extension` ASC';
+    $result = $GLOBALS['APIDB']->queryF($sql);
+    while($row = $GLOBALS['APIDB']->fetchArray($result))
+    {
+        $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'originals')) as `key`, concat(`major`, '.', `minor`, '.', `revision`, '.', `subrevision`) as `version` FROM `" . $GLOBALS['APIDB']->prefix('originals') . '` WHERE `format-id` = "' . $row['id'] . '"';
+        $resultb = $GLOBALS['APIDB']->queryF($sql);
+        while($original = $GLOBALS['APIDB']->fetchArray($resultb))
+            $row['original-keys'][nef($original['unixname'].'--'.$row['version'])] = $original['key'];
+        unset($row['id']);
+        $results[nef($row['extension'])][nef($row['title'])] = $row;
+    }
+    return $results;
+}
+
+
+function yonkCollectivesDetails($collectionid = 0) {
+    $results = array();
+    if ($collectionid == 0)
+        $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'collections')) as `key` FROM `" . $GLOBALS['APIDB']->prefix('collections') . '` WHERE 1 = 1 ORDER BY `created` ASC';
+    elseif ($collectionid != 0 && is_numeric($collectionid) && !is_string($collectionid))
+        $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'collections')) as `key` FROM `" . $GLOBALS['APIDB']->prefix('collections') . '` WHERE `id` = ' . $collectionid . ' ORDER BY `extension` ASC';
+    elseif (validateMD5($collectionid))
+        $sql = "SELECT *, md5(concat(`id`, '" . API_URL . "', 'collections')) as `key` FROM `" . $GLOBALS['APIDB']->prefix('collections') . '` WHERE md5(concat(`id`, "' . API_URL . '", "collections")) LIKE "' . $collectionid . '" ORDER BY `extension` ASC';
+    
+    $result = $GLOBALS['APIDB']->queryF($sql);
+    while($row = $GLOBALS['APIDB']->fetchArray($result))
+    {
+        unset($row['id']);
+        if ($row['pid']<>0)
+            $row['parent-key'] = md5($row['pid'] . API_URL . 'collections');
+        unset($row['pid']);
+        foreach(unserialize($row['oids']) as $indx => $oid) {
+            $row['original-keys'][] = md5($oid . API_URL . 'originals');
+        }
+        unset($row['oids']);
+        foreach(array_merge(array($row['uid']), unserialize($row['uids'])) as $indx => $uid)
+            $row['user-keys'][] = md5($uid . API_URL . 'users');
+        $row['user-keys'] = array_unique($row['user-keys']);
+        unset($row['uids']);
+        unset($row['uid']);
+        $row['email'] = checkEmail($row['email'], true);
+        unset($row['emailings']);
+        $results[$row['unixname']][nef($row['title'])] = $row;
+    }
+    return $results;
+}
+
+function yonkListingDetails($ip, $mode, $session, $output)
+{
+    switch ($mode)
+    {
+        case "unixnames":
+            if ($session = 'listing')
+            {
+                $results = array();
+                $sql = "SELECT DISTINCT `unixname` FROM `" . $GLOBALS['APIDB']->prefix('originals') . "` WHERE 1 = 1 GROUP BY `unixname`";
+                $result = $GLOBALS['APIDB']->queryF($sql);
+                while($row = $GLOBALS['APIDB']->fetchArray($result))
+                    $results[$row['unixname']] = yonkUnixnameAllVersions($row['unixname']);
+                return $results;
+            }
+            break;
+
+        case "users":
+            if ($session = 'listing')
+            {
+                $results = array();
+                $sql = "SELECT DISTINCT md5(concat(`uid`, '" . API_URL . "', 'users')) as `key`, `uname`, `name` FROM `" . $GLOBALS['APIDB']->prefix('users') . "` WHERE 1 = 1 GROUP BY `uid`";
+                $result = $GLOBALS['APIDB']->queryF($sql);
+                while($row = $GLOBALS['APIDB']->fetchArray($result))
+                    $results[$row['uname']][sef($row['name'])] = yonkUserDetails($row['key']);
+                return $results;
+            }
+            break;
+            
+        case "formats":
+            if ($session = 'listing')
+            {
+                return yonkFormatsDetails();
+            }
+            break;
+            
+        case "collectives":
+            if ($session = 'listing')
+            {
+                return yonkCollectivesDetails();
+            }
+            break;
+            
+        case "unixname":
+            
+            return yonkUnixnameAllVersions($session);
+            break;
+            
+        case "user":
+            
+            return yonkUserDetails($session);
+            break;
+            
+        case "collection":
+            
+            return yonkCollectivesDetails($session);
+            break;
+            
+        case "format":
+            
+            return yonkFormatsDetails($session);
+            break;
+            
+    }
+}
+
+function yonkUnixnameLatestVersion($unixname = '')
+{
+    $sql = "SELECT `major`, `minor`, `revision`, `subrevision` FROM `" . $GLOBALS['APIDB']->prefix('originals') . '` WHERE `unixname` LIKE "' . $unixname . '" ORDER BY `major` DESC, `minor` DESC, `revision` DESC, `subrevision` DESC LIMIT 1';
+    list($major, $minor, $revision, $subrevision) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
+    return "$major.$minor.$revision.$subrevision";
+}
+
+function yonkUnixnameEarliestVersion($unixname = '')
+{
+    $sql = "SELECT `major`, `minor`, `revision`, `subrevision` FROM `" . $GLOBALS['APIDB']->prefix('originals') . '` WHERE `unixname` LIKE "' . $unixname . '" ORDER BY `major` ASC, `minor` ASC, `revision` ASC, `subrevision` ASC LIMIT 1';
+    list($major, $minor, $revision, $subrevision) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
+    return "$major.$minor.$revision.$subrevision";
+}
+
+function yonkUnixnameRandomVersion($unixname = '')
+{
+    $sql = "SELECT `major`, `minor`, `revision`, `subrevision` FROM `" . $GLOBALS['APIDB']->prefix('originals') . '` WHERE `unixname` LIKE "' . $unixname . '" ORDER BY RAND() LIMIT 1';
+    list($major, $minor, $revision, $subrevision) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
+    return "$major.$minor.$revision.$subrevision";
+}
 
 function yonkUserURL($uid = 0, $mode = 'profile')
 {
@@ -147,37 +467,43 @@ function yonkRandomUserhash($uids = array(), $not = false)
         $in = " WHERE `uid` " . ($not==true?' NOT ':'') . 'IN (' . implode(', ', $uids) .") ";
     }
     
-    $sql = "SELECT md5(concat(`uid`,`email`,`api_regdate`)) as `md5` FROM `" . $GLOBALS['APIDB']->prefix('users') . '` $in ORDER BY RAND() LIMIT 1';
+    $sql = "SELECT md5(concat(`uid`,'" . API_URL . "','users')) as `md5` FROM `" . $GLOBALS['APIDB']->prefix('users') . '` $in ORDER BY RAND() LIMIT 1';
     list($md5) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
     if ($md5!=md5() && $md5!=md5(NULL))
         $hashes[] = $md5;
+    return $hashes[mt_rand(0, count($hashes) - 1)];
+}
+
+
+function yonkRandomCollectionhash($ids = array(), $not = false)
+{
+    $in = "";
+    if (!empty($ids) && count($ids))
+    {
+        $in = " WHERE `id` " . ($not==true?' NOT ':'') . 'IN (' . implode(', ', $ids) .") ";
+    }
     
-    $sql = "SELECT md5(`email`) as `md5` FROM `" . $GLOBALS['APIDB']->prefix('users') . '` $in ORDER BY RAND() LIMIT 1';
+    $sql = "SELECT md5(concat(`id`,'" . API_URL . "','collections')) as `md5` FROM `" . $GLOBALS['APIDB']->prefix('collections') . '` $in ORDER BY RAND() LIMIT 1';
     list($md5) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
     if ($md5!=md5() && $md5!=md5(NULL))
         $hashes[] = $md5;
-        
-    $sql = "SELECT md5(`uid`, `api_regdate`) as `md5` FROM `" . $GLOBALS['APIDB']->prefix('users') . '` $in ORDER BY RAND() LIMIT 1';
+    return $hashes[mt_rand(0, count($hashes) - 1)];
+}
+
+
+function yonkRandomFormathash($uids = array(), $not = false)
+{
+    $in = "";
+    if (!empty($ids) && count($ids))
+    {
+        $in = " WHERE `id` " . ($not==true?' NOT ':'') . 'IN (' . implode(', ', $ids) .") ";
+    }
+    
+    $sql = "SELECT md5(concat(`id`,'" . API_URL . "','formats')) as `md5` FROM `" . $GLOBALS['APIDB']->prefix('formats') . '` $in ORDER BY RAND() LIMIT 1';
     list($md5) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
     if ($md5!=md5() && $md5!=md5(NULL))
         $hashes[] = $md5;
-        
-    $sql = "SELECT md5(`username`,`email`) as `md5` FROM `" . $GLOBALS['APIDB']->prefix('users') . '` $in ORDER BY RAND() LIMIT 1';
-    list($md5) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
-    if ($md5!=md5() && $md5!=md5(NULL))
-        $hashes[] = $md5;
-        
-    $sql = "SELECT md5(`username`,`name`) as `md5` FROM `" . $GLOBALS['APIDB']->prefix('users') . '` $in ORDER BY RAND() LIMIT 1';
-    list($md5) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
-    if ($md5!=md5() && $md5!=md5(NULL))
-        $hashes[] = $md5;
-        
-    $sql = "SELECT md5(`username`) as `md5` FROM `" . $GLOBALS['APIDB']->prefix('users') . '` WHERE `uid` = "' . $uid . '"$in ORDER BY RAND() LIMIT 1';
-    list($md5) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
-    if ($md5!=md5() && $md5!=md5(NULL))
-        $hashes[] = $md5;
-        
-    return $hashes[mt_rand(0, count($hashes))];
+        return $hashes[mt_rand(0, count($hashes) - 1)];
 }
 
 function yonkRandomUnixname()
@@ -210,16 +536,7 @@ function yonkRandomColour()
  */
 
 if (!function_exists("yonkHTMLForm")) {
-    /**
-     * yonk the HTML Forms for the API
-     *
-     * @param unknown_type $mode
-     * @param unknown_type $clause
-     * @param unknown_type $output
-     * @param unknown_type $version
-     *
-     * @return string
-     */
+
     function yonkHTMLForm($mode = '', $clause = '', $callback = '', $output = '', $version = 'v2')
     {
         if (empty($clause))
@@ -359,38 +676,66 @@ if (!function_exists("yonkHTMLForm")) {
     }
 }
 
+function checkEmail($email, $antispam = false)
+{
+    if (!$email || !preg_match('/^[^@]{1,64}@[^@]{1,255}$/', $email)) {
+        return false;
+    }
+    $email_array      = explode('@', $email);
+    $local_array      = explode('.', $email_array[0]);
+    $local_arrayCount = count($local_array);
+    for ($i = 0; $i < $local_arrayCount; ++$i) {
+        if (!preg_match("/^(([A-Za-z0-9!#$%&'*+\/\=?^_`{|}~-][A-Za-z0-9!#$%&'*+\/\=?^_`{|}~\.-]{0,63})|(\"[^(\\|\")]{0,62}\"))$/", $local_array[$i])) {
+            return false;
+        }
+    }
+    if (!preg_match("/^\[?[0-9\.]+\]?$/", $email_array[1])) {
+        $domain_array = explode('.', $email_array[1]);
+        if (count($domain_array) < 2) {
+            return false; // Not enough parts to domain
+        }
+        for ($i = 0; $i < count($domain_array); ++$i) {
+            if (!preg_match("/^(([A-Za-z0-9][A-Za-z0-9-]{0,61}[A-Za-z0-9])|([A-Za-z0-9]+))$/", $domain_array[$i])) {
+                return false;
+            }
+        }
+    }
+    if ($antispam) {
+        $email = str_replace('@', ' at ', $email);
+        $email = str_replace('.', ' dot ', $email);
+    }
+    
+    return $email;
+}
+
+
+if (!function_exists('nef'))
+{
+    
+    function nef($subject = '', $stripe ='-')
+    {
+        $replacements = array("one" => "1", "two" => "2", "three" => "3", "four" => "4", "five" => "5", "six" => "6", "seven" => "7", "eight" => "8", "nine" => "9", "zero" => "0");
+        foreach($replacements as $replace => $search)
+            $subject = str_replace($search, $replace, $subject);
+        return sef($subject, $stripe);
+    }
+}
 
 if (!function_exists('sef'))
 {
-    /**
-     * Safe encoded paths elements
-     *
-     * @param unknown $datab
-     * @param string $char
-     *
-     * @return string
-     */
+
     function sef($value = '', $stripe ='-')
     {
-        return(strtolower(yonkOnlyAlpha($result, $stripe)));
+        return yonkOnlyAlphanumeric($value, $stripe);
     }
 }
 
 
-if (!function_exists('yonkOnlyAlpha'))
+if (!function_exists('yonkOnlyAlphanumeric'))
 {
-    /**
-     * Safe encoded paths elements
-     *
-     * @param unknown $datab
-     * @param string $char
-     *
-     * @return string
-     */
-    function yonkOnlyAlpha($value = '', $stripe ='-')
+
+    function yonkOnlyAlphanumeric($value = '', $stripe ='-')
     {
-        $value = str_replace('&', 'and', $value);
-        $value = str_replace(array("'", '"', "`"), 'tick', $value);
         $replacement_chars = array();
         $accepted = array("a","b","c","d","e","f","g","h","i","j","k","l","m","n","m","o","p","q",
             "r","s","t","u","v","w","x","y","z","0","9","8","7","6","5","4","3","2","1");
@@ -398,7 +743,7 @@ if (!function_exists('yonkOnlyAlpha'))
             if (!in_array(strtolower(chr($i)),$accepted))
                 $replacement_chars[] = chr($i);
         }
-        $result = trim(str_replace($replacement_chars, $stripe, ($value)));
+        $result = trim(str_replace($replacement_chars, $stripe, strtolower($value)));
         while(strpos($result, $stripe.$stripe, 0))
             $result = (str_replace($stripe.$stripe, $stripe, $result));
         while(substr($result, 0, strlen($stripe)) == $stripe)
@@ -482,7 +827,7 @@ function yonkImageInfoArray($file = '')
                             break;
                     }
                 break;
-            case "geometry":
+            case "image-geometry":
                 $parts = explode("+",$data);
                 $parts = explode("x",$parts[0]);
                 $results['width'] = $parts[0];
@@ -518,6 +863,74 @@ function yonkImageInfoArray($file = '')
         if (!in_array($key, $fields))
             unset($results[$key]);
     return $results;
+}
+
+if (!function_exists("getURIData")) {
+    
+    /* function yonkURIData()
+     *
+     * 	Get a supporting domain system for the API
+     * @author 		Simon Roberts (Chronolabs) simon@labs.coop
+     *
+     * @return 		float()
+     */
+    function getURIData($uri = '', $timeout = 25, $connectout = 25, $post = array(), $headers = array())
+    {
+        if (!function_exists("curl_init"))
+        {
+            die("Install PHP Curl Extension ie: $ sudo apt-get install php-curl -y");
+        }
+        $GLOBALS['php-curl'][md5($uri)] = array();
+        if (!$btt = curl_init($uri)) {
+            return false;
+        }
+        if (count($post)==0 || empty($post))
+            curl_setopt($btt, CURLOPT_POST, false);
+            else {
+                $uploadfile = false;
+                foreach($post as $field => $value)
+                    if (substr($value , 0, 1) == '@' && !file_exists(substr($value , 1, strlen($value) - 1)))
+                        unset($post[$field]);
+                        else
+                            $uploadfile = true;
+                            curl_setopt($btt, CURLOPT_POST, true);
+                            curl_setopt($btt, CURLOPT_POSTFIELDS, http_build_query($post));
+                            
+                            if (!empty($headers))
+                                foreach($headers as $key => $value)
+                                    if ($uploadfile==true && substr($value, 0, strlen('Content-Type:')) == 'Content-Type:')
+                                        unset($headers[$key]);
+                                        if ($uploadfile==true)
+                                            $headers[]  = 'Content-Type: multipart/form-data';
+            }
+            if (count($headers)==0 || empty($headers)) {
+                curl_setopt($btt, CURLOPT_HEADER, false);
+                curl_setopt($btt, CURLOPT_HTTPHEADER, array());
+            } else {
+                curl_setopt($btt, CURLOPT_HEADER, false);
+                curl_setopt($btt, CURLOPT_HTTPHEADER, $headers);
+            }
+            curl_setopt($btt, CURLOPT_CONNECTTIMEOUT, $connectout);
+            curl_setopt($btt, CURLOPT_TIMEOUT, $timeout);
+            curl_setopt($btt, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($btt, CURLOPT_VERBOSE, false);
+            curl_setopt($btt, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($btt, CURLOPT_SSL_VERIFYPEER, false);
+            $data = curl_exec($btt);
+            $GLOBALS['php-curl'][md5($uri)]['http']['uri'] = $uri;
+            $GLOBALS['php-curl'][md5($uri)]['http']['posts'] = $post;
+            $GLOBALS['php-curl'][md5($uri)]['http']['headers'] = $headers;
+            $GLOBALS['php-curl'][md5($uri)]['http']['code'] = curl_getinfo($btt, CURLINFO_HTTP_CODE);
+            $GLOBALS['php-curl'][md5($uri)]['header']['size'] = curl_getinfo($btt, CURLINFO_HEADER_SIZE);
+            $GLOBALS['php-curl'][md5($uri)]['header']['value'] = curl_getinfo($btt, CURLINFO_HEADER_OUT);
+            $GLOBALS['php-curl'][md5($uri)]['size']['download'] = curl_getinfo($btt, CURLINFO_SIZE_DOWNLOAD);
+            $GLOBALS['php-curl'][md5($uri)]['size']['upload'] = curl_getinfo($btt, CURLINFO_SIZE_UPLOAD);
+            $GLOBALS['php-curl'][md5($uri)]['content']['length']['download'] = curl_getinfo($btt, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+            $GLOBALS['php-curl'][md5($uri)]['content']['length']['upload'] = curl_getinfo($btt, CURLINFO_CONTENT_LENGTH_UPLOAD);
+            $GLOBALS['php-curl'][md5($uri)]['content']['type'] = curl_getinfo($btt, CURLINFO_CONTENT_TYPE);
+            curl_close($btt);
+            return $data;
+    }
 }
 
 function yonkImageFormats()
@@ -743,56 +1156,9 @@ if (!function_exists("whitelistYonkIP")) {
 
 
 if (!class_exists("XmlDomConstruct")) {
-	/**
-	 * class XmlDomConstruct
-	 *
-	 * 	Extends the DOMDocument to implement personal (utility) methods.
-	 *
-	 * @author 		Simon Roberts (Chronolabs) simon@labs.coop
-	 */
+
 	class XmlDomConstruct extends DOMDocument {
 
-		/**
-		 * Constructs elements and texts from an array or string.
-		 * The array can contain an element's name in the index part
-		 * and an element's text in the value part.
-		 *
-		 * It can also creates an xml with the same element tagName on the same
-		 * level.
-		 *
-		 * ex:
-		 * <nodes>
-		 *   <node>text</node>
-		 *   <node>
-		 *     <field>hello</field>
-		 *     <field>world</field>
-		 *   </node>
-		 * </nodes>
-		 *
-		 * Array should then look like:
-		 *
-		 * Array (
-		 *   "nodes" => Array (
-		 *     "node" => Array (
-		 *       0 => "text"
-		 *       1 => Array (
-		 *         "field" => Array (
-		 *           0 => "hello"
-		 *           1 => "world"
-		 *         )
-		 *       )
-		 *     )
-		 *   )
-		 * )
-		 *
-		 * @param mixed $mixed An array or string.
-		 *
-		 * @param DOMElement[optional] $domElement Then element
-		 * from where the array will be construct to.
-		 *
-		 * @author 		Simon Roberts (Chronolabs) simon@labs.coop
-		 *
-		 */
 		public function fromMixed($mixed, DOMElement $domElement = null) {
 
 			$domElement = is_null($domElement) ? $this : $domElement;

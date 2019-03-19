@@ -22,38 +22,38 @@
 DROP TABLE IF EXISTS `collections`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `collections` (
-  `id` mediumint(200) NOT NULL AUTO_INCREMENT,
+  `id` mediumint(200) NOT NULL,
   `pid` mediumint(200) NOT NULL,
-  `uid` mediumint(8) unsigned NOT NULL DEFAULT '0',
-  `uids` mediumblob NOT NULL,
-  `oids` mediumblob NOT NULL,
+  `uid` mediumint(8) UNSIGNED NOT NULL DEFAULT '0',
+  `uids` mediumblob,
+  `oids` mediumblob,
   `organisation` varchar(255) NOT NULL DEFAULT '',
   `name` varchar(255) NOT NULL DEFAULT '',
   `email` varchar(255) NOT NULL DEFAULT '',
   `emailings` tinyblob,
   `unixname` varchar(255) NOT NULL DEFAULT '',
   `title` varchar(64) NOT NULL DEFAULT '',
-  `description` tinyblob NOT NULL,
-  `originals` int(20) unsigned NOT NULL DEFAULT '0',
-  `downloads` int(20) unsigned NOT NULL DEFAULT '0',
-  `converts` int(20) unsigned NOT NULL DEFAULT '0',
-  `emails` int(20) unsigned NOT NULL DEFAULT '0',
-  `created` int(13) unsigned NOT NULL DEFAULT '0',
-  `updated` int(13) unsigned NOT NULL DEFAULT '0',
-  `emailed` int(13) unsigned NOT NULL DEFAULT '0',
-  `added` int(13) unsigned NOT NULL DEFAULT '0',
-  `downloaded` int(13) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  KEY `CHRONOMETRY` (`emails`,`created`,`updated`,`emailed`,`added`),
-  KEY `SEARCH` (`uid`,`unixname`,`pid`) USING BTREE,
-  KEY `INDICIES` (`emails`,`converts`,`downloads`,`originals`,`unixname`,`uid`,`pid`)
+  `description` tinyblob,
+  `originals` int(20) UNSIGNED NOT NULL DEFAULT '0',
+  `downloads` int(20) UNSIGNED NOT NULL DEFAULT '0',
+  `converts` int(20) UNSIGNED NOT NULL DEFAULT '0',
+  `emails` int(20) UNSIGNED NOT NULL DEFAULT '0',
+  `created` int(13) UNSIGNED NOT NULL DEFAULT '0',
+  `updated` int(13) UNSIGNED NOT NULL DEFAULT '0',
+  `emailed` int(13) UNSIGNED NOT NULL DEFAULT '0',
+  `added` int(13) UNSIGNED NOT NULL DEFAULT '0',
+  `downloaded` int(13) UNSIGNED NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Dumping data for table `collections`
 --
+
+INSERT INTO `collections` (`id`, `pid`, `uid`, `uids`, `oids`, `organisation`, `name`, `email`, `emailings`, `unixname`, `title`, `description`, `originals`, `downloads`, `converts`, `emails`, `created`, `updated`, `emailed`, `added`, `downloaded`) VALUES
+(1, 0, 1, 0x613a313a7b693a303b693a313b7d, 0x613a313a7b693a303b693a313b7d, 'Chronolabs Cooperative', 'Dr. Simon Antony Roberts', 'simonxaies@gmail.com', 0x613a313a7b693a303b693a313b7d, 'chronolabs-coop', 'Chronolabs Cooperative', '', 1, 0, 0, 0, 0, 0, 0, 0, 0);
+
 
 LOCK TABLES `collections` WRITE;
 /*!40000 ALTER TABLE `collections` DISABLE KEYS */;

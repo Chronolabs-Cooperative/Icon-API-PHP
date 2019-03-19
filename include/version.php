@@ -30,5 +30,5 @@ defined('API_ROOT_PATH') || exit('Restricted access');
 /**
  *  Define API version
  */
-define('API_VERSION', 'Favorite Icons REST API v1.1.2');
+define('API_VERSION', 'Favorite Icons REST API v1.1.4');
 define('API_TYPE', 'favicons');

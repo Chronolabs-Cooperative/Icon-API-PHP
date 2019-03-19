@@ -53,7 +53,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Dr. Simon Antony Roberts','mynamesnot','simon@snails.email','','blank.gif',1514529339,'',NULL,'kweusacq','b0297a0406e3c38b4c5644622244deee',0,0,'',0,0,1);
+INSERT INTO `users` VALUES (1,'Dr. Simon Antony Roberts','mynamesnot','simonxaies@gmail.com','','blank.gif',1514529339,'',NULL,'kweusacq','b0297a0406e3c38b4c5644622244deee',0,0,'',0,0,1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

@@ -23,21 +23,21 @@ DROP TABLE IF EXISTS `originals`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `originals` (
-  `id` mediumint(200) unsigned NOT NULL AUTO_INCREMENT,
-  `format-id` mediumint(200) unsigned NOT NULL DEFAULT '0',
-  `image-id` mediumint(200) unsigned NOT NULL DEFAULT '0',
-  `collection-id` mediumint(200) unsigned NOT NULL DEFAULT '0',
-  `uid` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `id` mediumint(200) UNSIGNED NOT NULL,
+  `format-id` mediumint(200) UNSIGNED NOT NULL DEFAULT '0',
+  `image-id` mediumint(200) UNSIGNED NOT NULL DEFAULT '0',
+  `collection-id` mediumint(200) UNSIGNED NOT NULL DEFAULT '0',
+  `uid` mediumint(8) UNSIGNED NOT NULL DEFAULT '0',
   `uids` tinyblob,
   `organisation` varchar(255) NOT NULL DEFAULT '',
   `name` varchar(255) NOT NULL DEFAULT '',
   `email` varchar(255) NOT NULL DEFAULT '',
   `emailings` tinyblob,
   `unixname` varchar(255) NOT NULL DEFAULT '',
-  `major` int(4) unsigned NOT NULL DEFAULT '0',
-  `minor` int(4) unsigned NOT NULL DEFAULT '0',
-  `revision` int(4) unsigned NOT NULL DEFAULT '0',
-  `subrevision` int(4) unsigned NOT NULL DEFAULT '0',
+  `major` int(4) UNSIGNED NOT NULL DEFAULT '0',
+  `minor` int(4) UNSIGNED NOT NULL DEFAULT '0',
+  `revision` int(4) UNSIGNED NOT NULL DEFAULT '0',
+  `subrevision` int(4) UNSIGNED NOT NULL DEFAULT '0',
   `image` varchar(255) NOT NULL DEFAULT '',
   `image-format` varchar(255) NOT NULL DEFAULT '',
   `image-mime-type` varchar(64) NOT NULL DEFAULT '',
@@ -50,41 +50,34 @@ CREATE TABLE `originals` (
   `image-channel-depth-red` varchar(48) NOT NULL DEFAULT '',
   `image-channel-depth-green` varchar(48) NOT NULL DEFAULT '',
   `image-channel-depth-blue` varchar(48) NOT NULL DEFAULT '',
-  `width` int(64) unsigned NOT NULL DEFAULT '0',
-  `height` int(64) unsigned NOT NULL DEFAULT '0',
-  `bytes` int(64) unsigned NOT NULL DEFAULT '0',
-  `emails` int(20) unsigned NOT NULL DEFAULT '0',
-  `converts` int(20) unsigned NOT NULL DEFAULT '0',
-  `uploads` int(20) unsigned NOT NULL DEFAULT '0',
-  `downloads` int(20) unsigned NOT NULL DEFAULT '0',
-  `caching` int(20) unsigned NOT NULL DEFAULT '0',
-  `emails_bytes` mediumint(40) unsigned NOT NULL DEFAULT '0',
-  `converts_bytes` mediumint(40) unsigned NOT NULL DEFAULT '0',
-  `uploads_bytes` mediumint(40) unsigned NOT NULL DEFAULT '0',
-  `downloads_bytes` mediumint(40) unsigned NOT NULL DEFAULT '0',
-  `caching_bytes` mediumint(40) unsigned NOT NULL DEFAULT '0',
-  `created` int(13) unsigned NOT NULL DEFAULT '0',
-  `updated` int(13) unsigned NOT NULL DEFAULT '0',
-  `emailed` int(13) unsigned NOT NULL DEFAULT '0',
-  `converted` int(13) unsigned NOT NULL DEFAULT '0',
-  `uploaded` int(13) unsigned NOT NULL DEFAULT '0',
-  `downloaded` int(13) unsigned NOT NULL DEFAULT '0',
-  `cached` int(13) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  KEY `searching` (`format-id`,`image-id`,`unixname`(32)),
-  KEY `indicies` (`major`,`minor`,`revision`,`subrevision`,`width`,`height`,`image-mime-type`(16)),
-  KEY `chronometry` (`created`,`updated`,`emailed`,`converted`,`uploaded`,`downloaded`,`cached`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  `width` int(64) UNSIGNED NOT NULL DEFAULT '0',
+  `height` int(64) UNSIGNED NOT NULL DEFAULT '0',
+  `bytes` int(64) UNSIGNED NOT NULL DEFAULT '0',
+  `emails` int(20) UNSIGNED NOT NULL DEFAULT '0',
+  `converts` int(20) UNSIGNED NOT NULL DEFAULT '0',
+  `uploads` int(20) UNSIGNED NOT NULL DEFAULT '0',
+  `downloads` int(20) UNSIGNED NOT NULL DEFAULT '0',
+  `caching` int(20) UNSIGNED NOT NULL DEFAULT '0',
+  `emails_bytes` mediumint(40) UNSIGNED NOT NULL DEFAULT '0',
+  `converts_bytes` mediumint(40) UNSIGNED NOT NULL DEFAULT '0',
+  `uploads_bytes` mediumint(40) UNSIGNED NOT NULL DEFAULT '0',
+  `downloads_bytes` mediumint(40) UNSIGNED NOT NULL DEFAULT '0',
+  `caching_bytes` mediumint(40) UNSIGNED NOT NULL DEFAULT '0',
+  `created` int(13) UNSIGNED NOT NULL DEFAULT '0',
+  `updated` int(13) UNSIGNED NOT NULL DEFAULT '0',
+  `emailed` int(13) UNSIGNED NOT NULL DEFAULT '0',
+  `converted` int(13) UNSIGNED NOT NULL DEFAULT '0',
+  `uploaded` int(13) UNSIGNED NOT NULL DEFAULT '0',
+  `downloaded` int(13) UNSIGNED NOT NULL DEFAULT '0',
+  `cached` int(13) UNSIGNED NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Dumping data for table `originals`
+-- Dumping data for table `icon__originals`
 --
 
-LOCK TABLES `originals` WRITE;
-/*!40000 ALTER TABLE `originals` DISABLE KEYS */;
-INSERT INTO `originals` VALUES (1,138,1,0,1,NULL,'Chronolabs Cooperative','Dr. Simon Antony Roberts','simon@snails.email',NULL,'chronolabs-it',2,1,1,0,'chronolabs-it.png','PNG (Portable Network Graphics)','image/png','DirectClass','1178x1178+0+0','PixelsPerCentimeter','Undefined','sRGB','8-bit','8-bit','8-bit','8-bit',0,0,528199,0,9,1,2,14,0,162299,528199,86618,2803294,1514529339,0,0,1514529625,1514529339,1514529625,1514529625);
-/*!40000 ALTER TABLE `originals` ENABLE KEYS */;
+INSERT INTO `originals` (`id`, `format-id`, `image-id`, `collection-id`, `uid`, `uids`, `organisation`, `name`, `email`, `emailings`, `unixname`, `major`, `minor`, `revision`, `subrevision`, `image`, `image-format`, `image-mime-type`, `image-class`, `image-geometry`, `image-units`, `image-endianess`, `image-colorspace`, `image-depth`, `image-channel-depth-red`, `image-channel-depth-green`, `image-channel-depth-blue`, `width`, `height`, `bytes`, `emails`, `converts`, `uploads`, `downloads`, `caching`, `emails_bytes`, `converts_bytes`, `uploads_bytes`, `downloads_bytes`, `caching_bytes`, `created`, `updated`, `emailed`, `converted`, `uploaded`, `downloaded`, `cached`) VALUES
+(1, 3514, 1, 1, 1, NULL, 'Chronolabs Cooperative', 'Dr. Simon Antony Roberts', 'simon@snails.email', NULL, 'chronolabs-it', 2, 1, 1, 0, 'chronolabs-it.png', 'PNG (Portable Network Graphics)', 'image/png', 'DirectClass', '1178x1178+0+0', 'PixelsPerCentimeter', 'Undefined', 'sRGB', '8-bit', '8-bit', '8-bit', '8-bit', 1178, 1178, 528199, 0, 33, 1, 843, 63, 0, 883870, 528199, 16777211, 16729840, 1514529339, 0, 0, 1552980042, 1514529339, 1553002232, 1552980042);
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

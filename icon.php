@@ -87,34 +87,39 @@
 	if (function_exists("http_response_code"))
 		http_response_code(200);
 	
+	$version = (isset($inner['major'])?$inner['major'] . '.' . $inner['minor'] . '.' . $inner['revision'] . '.' . $inner['subrevision']:"0.0.0.0");
+		
 	if (!$sessions = APICache::read('cache-sessions'))
 	    $sessions = array();
 	    
-    if (!isset($sessions[$inner['unixname']]['seed']) && !isset($sessions[$inner['unixname']]['caches']))
-        $sessions[$inner['unixname']]['seed'] = mt_rand(0, 255);
+    if (!isset($sessions[$inner['unixname'] . '--' . $version]['seed']) && !isset($sessions[$inner['unixname']]['caches']))
+        $sessions[$inner['unixname'] . '--' . $version]['seed'] = mt_rand(0, 255);
         
-    if (!isset($sessions[$inner['unixname']]['length']) && !isset($sessions[$inner['unixname']]['caches']))
-        $sessions[$inner['unixname']]['length'] = mt_rand(5, 7);
+    if (!isset($sessions[$inner['unixname'] . '--' . $version]['length']) && !isset($sessions[$inner['unixname']]['caches']))
+        $sessions[$inner['unixname'] . '--' . $version]['length'] = mt_rand(5, 7);
         
-    if (!isset($sessions[$inner['unixname']]['caches']))
-        $sessions[$inner['unixname']]['caches'] = array();
-
-    if (!$cache == APICache::read(yonkCacheKey($inner['unixname'], $inner['width'], $inner['format'], 'icon', '', $inner['extra'])) || empty($cache['data']) || $cache == true)
+    if (!isset($sessions[$inner['unixname'] . '--' . $version]['caches']))
+        $sessions[$inner['unixname'] . '--' . $version]['caches'] = array();
+    
+    mkdir(API_VAR_PATH . DS . parse_url(API_URL, PHP_URL_HOST), 0777, true);
+    mkdir($workpath = API_VAR_PATH . DS . parse_url(API_URL, PHP_URL_HOST) . DS . substr(md5(microtime(true)), mt_rand(0, 31 - 8), 8), 0777, true);
+    chdir($workpath);
+    
+    if (!$cache == APICache::read($key = yonkCacheKey($inner['unixname'], $inner['width'], $inner['format'], 'icon', '', $inner['extra'], $version)) || empty($cache['data']) || $cache == true)
 	{
-	    
-	    $sql = "SELECT `id`, `format-id`, `image-id`, `width`, `height`, `image` FROM `" . $GLOBALS['APIDB']->prefix('originals') . '` WHERE `unixname` LIKE "' . $inner['unixname'] . '"';
-	    list($originalid, $formatid, $imageid, $width, $height, $filename) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
+	    $sql = "SELECT `id`, `format-id`, `image-id`, `width`, `height`, `image`, `major`, `minor`, `revision`, `subrevision` FROM `" . $GLOBALS['APIDB']->prefix('originals') . '` WHERE `unixname` LIKE "' . $inner['unixname'] . '"'  . ($version != "0.0.0.0"?' AND ((`major` >= ' . $inner['major'] . ' AND `minor` >= ' . $inner['minor'] . ' AND `revision` >= ' . $inner['revision'] . ' AND `subrevision` >= ' . $inner['subrevision'] . ') OR (`major` <= ' . $inner['major'] . ' AND `minor` <= ' . $inner['minor'] . ' AND `revision` <= ' . $inner['revision'] . ' AND `subrevision` <= ' . $inner['subrevision'] . '))':" ORDER BY `major` DESC, `minor` DESC, `revision` DESC, `subrevision` DESC") ;
+	    list($originalid, $formatid, $imageid, $width, $height, $filename, $major, $minor, $revision, $subrevision) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
+	    $versioning = "$major.$minor.$revision.$subrevision";
 	    $sql = "SELECT `extension` FROM `" . $GLOBALS['APIDB']->prefix('formats') . '` WHERE `id` = "' . $formatid . '"';
 	    list($extension) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
-	    mkdir($workpath = API_VAR_PATH . DS . sha1(microtime(true)), 0777, true);
-	    if (!is_array($original = APICache::read($key = yonkCacheKey($unixname, $width, $extension, 'original'))) || empty($original['data']) || $original == true)
+	    if (!is_array($original = APICache::read($key = yonkCacheKey($inner['unixname'], $width, $extension, 'original', '', $versioning))) || empty($original['data']) || $original == true)
 	    {
-	        
 	        $sql = "SELECT `image` FROM `" . $GLOBALS['APIDB']->prefix('images') . '` WHERE `id` = "' . $imageid . '"';
 	        list($imgdata) = $GLOBALS['APIDB']->fetchRow($GLOBALS['APIDB']->queryF($sql));
-	        file_put_contents($workpath . DS . $filename, $imgdata);
-	        $original = yonkImageInfoArray($workpath . DS . $filename);
+	        file_put_contents($srcfile = $workpath . DS . (!empty($versioning)?$versioning . '--':"") . $filename, $imgdata);
+	        $original = yonkImageInfoArray($srcfile);
 	        $original['data']  = $imgdata;
+	        $original['version'] = $versioning;
 	        
 	        $sql = "UPDATE `" . $GLOBALS['APIDB']->prefix('images') . '` SET `queried` = UNIX_TIMESTAMP() WHERE `id` = "' . $imageid . '"';
 	        $GLOBALS['APIDB']->queryF($sql);
@@ -123,40 +128,49 @@
 	        
 	    } else {
 	        
-	        file_put_contents($workpath . DS . $filename, $original['data']);
+	        file_put_contents($srcfile = $workpath . DS . $original['version'] . '--' . $filename, $original['data']);
 	    }
 	    
-	    APICache::write($key = yonkCacheKey($unixname, $width, $extension, 'original'), $original, $seconds = API_CACHE_ORIGINAL);
-	    $sessions[$unixname]['caches'][$key] = time() + $seconds;
-	    chdir($workpath);
-	    shell_exec(API_MAGICK_CONVERT . " -resize ".$inner['width'].'x'.$inner['width']. " " .$inner['extra'] . (!empty($inner['extra'])?" ":"")  . basename($filename) . " " . ($file = yonkFilename($inner['unixname'], $inner['width'], $inner['format'], 'icon', '', $inner['extra'])));
-
+	    APICache::write($key, $original, $seconds = API_CACHE_ORIGINAL);
+	    $sessions[$unixname . '--' . $version]['caches'][$key] = time() + $seconds;
+	    shell_exec($exe = API_MAGICK_CONVERT . " -resize ".$inner['width'].'x'.$inner['width']. " "  . (!empty($inner['extra'])?$inner['extra'] . ' ':"")  . " '" . $srcfile . "' '" . $workpath . DS . ($file = yonkFilename($inner['unixname'], $inner['width'], $inner['format'], 'icon', '', $inner['extra'], $original['version'])) . "'");
 	    $sql = "UPDATE `" . $GLOBALS['APIDB']->prefix('originals') . '` SET `converts` = `converts` + 1, `converts_bytes` = `converts_bytes` + '.filesize($workpath . DS . $file) . ', `converted` = UNIX_TIMESTAMP() WHERE `id` = "' . $originalid . '"';
 	    $GLOBALS['APIDB']->queryF($sql);
 	    $sql = "UPDATE `" . $GLOBALS['APIDB']->prefix('originals') . '` SET `caching` = `caching` + 1, `caching_bytes` = `caching_bytes` + '.filesize($workpath . DS . $file) . ', `cached` = UNIX_TIMESTAMP() WHERE `id` = "' . $originalid . '"';
 	    $GLOBALS['APIDB']->queryF($sql);
-	    
-	    $cache = yonkImageInfoArray($workpath . DS . $file);
-	    $cache['data']  = file_get_contents($workpath . DS . $file);
-	    shell_exec("rm -Rfv '$workpath'");
+	    if (file_exists($workpath . DS . $file)) {
+	        $cache = yonkImageInfoArray($workpath . DS . $file);
+	        $cache['data']  = file_get_contents($workpath . DS . $file);
+    	    $cache['version'] = $original['version'];
+	    } else {
+	        $cache = array();
+	        $cache['data']  = "File not Found!";
+	    }
 	    
 	}
 
-    APICache::write(yonkCacheKey($inner['unixname'], $inner['width'], $inner['format'], 'icon', '', $inner['extra']), $cache, $seconds = API_CACHE_ORIGINAL);
-    $sessions[$inner['unixname']]['caches'][$key] = time() + $seconds;
+	//die(print_r($original, true));
+	//die(print_r($cache, true));
+	
+	shell_exec("rm -Rfv '$workpath'");
+	
+	APICache::write(yonkCacheKey($inner['unixname'], $inner['width'], $inner['format'], 'icon', '', $inner['extra'], $version), $cache, $seconds = API_CACHE_ORIGINAL);
+	$sessions[$inner['unixname'] . '--' .$version]['caches'][$key] = time() + $seconds;
     APICache::write('cache-sessions', $sessions, API_CACHE_SESSIONS);
     
 	header('Content-Type: ' . $cache['image-mime-type']);
-	header('Content-Disposition: attachment; filename="' . yonkFilename($inner['unixname'], $inner['width'], $inner['format'], 'icon', '', $inner['extra']) . '"');
+	header('Content-Disposition: attachment; filename="' . yonkFilename($inner['unixname'], $inner['width'], $inner['format'], 'icon', '', $inner['extra'], (isset($cache['version'])?$cache['version']:(isset($versioning)?$versioning:$version))) . '"');
 	header('Content-Transfer-Encoding: binary');
 	header('Accept-Ranges: bytes');
 	header('Cache-Control: private');
 	header('Pragma: private');
 	header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-	
+	foreach($cache as $key => $value)
+	    if ($key != 'data')
+	        header(str_replace(' ', '-', ucwords(str_replace('-', ' ', $key))) .": $value");
 	$sql = "UPDATE `" . $GLOBALS['APIDB']->prefix('originals') . '` SET `downloads` = `downloads` + 1, `downloads_bytes` = `downloads_bytes` + '.strlen($cache['data']) . ', `downloaded` = UNIX_TIMESTAMP() WHERE `id` = "' . $originalid . '"';
 	$GLOBALS['APIDB']->queryF($sql);
 	
 	die($cache['data']);
-	            
+	
 ?>

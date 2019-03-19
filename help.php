@@ -26,8 +26,12 @@
 	
 	$formats = yonkImageFormats();
 	$unixname = yonkRandomUnixname();
+	$version = yonkUnixnameRandomVersion($unixname);
 	$size = mt_rand(96, 256);
 	$userhash = yonkRandomUserhash();
+	$collectionhash = yonkRandomCollectionhash();
+	$formathash = yonkRandomFormathash();
+	
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -114,14 +118,22 @@
     <blockquote>
     	<?php foreach($typals as $extension => $title) { ?>
     	<h3><?php echo $title; ?> File Format Output</h3>
-    	<font class="help-title-text">Retrieves an listing of unix-names in relationship to user ownership hashes in the format of PHP generated '<?php echo $title; ?>'!</font><br/>
+    	<font class="help-title-text">Retrieves an listing of unix-names in relationship to user ownership hashes in the format of <?php echo strtoupper($extension); ?> generated output!</font><br/>
         <font class="help-url-example"><a href="<?php echo API_URL; ?>/v1/unixnames/listing.<?php echo $extension; ?>"><?php echo API_URL; ?>/v1/unixnames/listing.<?php echo $extension; ?></a></font><br /><br />
-		<font class="help-title-text">Retrieves an listing of users in relationship to unix-names based in ownership hashes in the format of PHP generated '<?php echo $title; ?>'!</font><br/>
+		<font class="help-title-text">Retrieves an listing of users in relationship to unix-names based in ownership hashes in the format of <?php echo strtoupper($extension); ?> generated output!</font><br/>
         <font class="help-url-example"><a href="<?php echo API_URL; ?>/v1/users/listing.<?php echo $extension; ?>"><?php echo API_URL; ?>/v1/users/listing.<?php echo $extension; ?></a></font><br /><br />
-        <font class="help-title-text">Retrieves an listing of unix-names in relationship to user ownership hashes in the format of PHP generated '<?php echo $title; ?>'!</font><br/>
+        <font class="help-title-text">Retrieves an listing of image in formats in the format of <?php echo strtoupper($extension); ?> generated output!</font><br/>
+        <font class="help-url-example"><a href="<?php echo API_URL; ?>/v1/formats/listing.<?php echo $extension; ?>"><?php echo API_URL; ?>/v1/formats/listing.<?php echo $extension; ?></a></font><br /><br />
+        <font class="help-title-text">Retrieves an listing of image collectives in the database in the format of <?php echo strtoupper($extension); ?> generated output!</font><br/>
+        <font class="help-url-example"><a href="<?php echo API_URL; ?>/v1/collectives/listing.<?php echo $extension; ?>"><?php echo API_URL; ?>/v1/collectives/listing.<?php echo $extension; ?></a></font><br /><br />
+        <font class="help-title-text">Retrieves an listing of unix-names in relationship to user ownership hashes in the format of <?php echo strtoupper($extension); ?> generated output!</font><br/>
         <font class="help-url-example"><a href="<?php echo API_URL; ?>/v1/unixname/<?php echo $unixname; ?>.<?php echo $extension; ?>"><?php echo API_URL; ?>/v1/unixname/<?php echo $unixname; ?>.<?php echo $extension; ?></a></font><br /><br />
-		<font class="help-title-text">Retrieves an listing of users in relationship to unix-names based in ownership hashes in the format of PHP generated '<?php echo $title; ?>'!</font><br/>
+		<font class="help-title-text">Retrieves an listing of users in relationship to unix-names based in ownership hashes in the format of <?php echo strtoupper($extension); ?> generated output!</font><br/>
         <font class="help-url-example"><a href="<?php echo API_URL; ?>/v1/user/<?php echo $userhash; ?>.<?php echo $extension; ?>"><?php echo API_URL; ?>/v1/user/<?php echo $userhash; ?>.<?php echo $extension; ?></a></font><br /><br />
+		<font class="help-title-text">Retrieves an listing of users in relationship to a collection based in ownership hashes in the format of <?php echo strtoupper($extension); ?> generated output!</font><br/>
+        <font class="help-url-example"><a href="<?php echo API_URL; ?>/v1/collection/<?php echo $collectionhash; ?>.<?php echo $extension; ?>"><?php echo API_URL; ?>/v1/collection/<?php echo $collectionhash; ?>.<?php echo $extension; ?></a></font><br /><br />
+		<font class="help-title-text">Retrieves an listing of users in relationship to a format based in ownership hashes in the format of <?php echo strtoupper($extension); ?> generated output!</font><br/>
+        <font class="help-url-example"><a href="<?php echo API_URL; ?>/v1/format/<?php echo $formathash; ?>.<?php echo $extension; ?>"><?php echo API_URL; ?>/v1/format/<?php echo $formathash; ?>.<?php echo $extension; ?></a></font><br /><br />        
 <?php } ?>
 		<h3>HTML File Format Output</h3>
 		<font class="help-title-text">Retrieves an viewiable profile of unix-name's in openly in HTML!</font><br/>
@@ -137,6 +149,8 @@
     	<h3>Image Format: <?php echo $title; ?></h3>
     	<font class="help-title-text">Retrieves an *.<?php echo $extension; ?> icon/image in the format of '<?php echo $title; ?>' which is '<?php echo $size; ?>x<?php echo $size; ?>' in size with width+height!</font><br/>
         <font class="help-url-example"><a href="<?php echo yonkImageURL($unixname, $size, $extension, 'icon'); ?>" target="_blank"><?php echo yonkImageURL($unixname, $size, $extension, 'icon'); ?></a></font><br /><br />
+        <font class="help-title-text">Retrieves version '<?php echo $version; ?>' of the *.<?php echo $extension; ?> icon/image in the format of '<?php echo $title; ?>' which is '<?php echo $size; ?>x<?php echo $size; ?>' in size with width+height!</font><br/>
+        <font class="help-url-example"><a href="<?php echo yonkImageVersionURL($unixname, $size, $extension, $version, 'icon'); ?>" target="_blank"><?php echo yonkImageVersionURL($unixname, $size, $extension, $version, 'icon'); ?></a></font><br /><br />
 		<?php } ?>        
     </blockquote>
         

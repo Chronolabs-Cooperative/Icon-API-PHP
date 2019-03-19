@@ -19,6 +19,8 @@
  * @description		Internet Protocol Address Information API Service REST
  */
 
+    global $output, $mode, $inner;
+    
 	$parts = explode(".", microtime(true));
 	mt_srand(mt_rand(-microtime(true), microtime(true))/$parts[1]);
 	mt_srand(mt_rand(-microtime(true), microtime(true))/$parts[1]);
@@ -95,19 +97,24 @@
 	if (function_exists("http_response_code"))
 		http_response_code(200);
 	
-	$data = findDetails($ip, $mode, $output);
+	switch ($output) {
+	    default: 
+	        $data = yonkListingDetails($ip, $mode, $inner['session'], $output);
+	        break;
+	    case 'html':
+	        switch ($mode) {
+	            default:
+	                include_once __DIR__ . DS . $output . '-' . $mode . '.php';
+	                exit();
+	        }
+	}
+	
 	if (empty($data))
 	{
 	    if (function_exists("http_response_code"))
 	        http_response_code(501);
 	}	    
 	switch ($output) {
-		default:
-			echo '<h1>' . $ip . ' (IP locality data)</h1>';
-			echo '<pre style="font-family: \'Courier New\', Courier, Terminal; font-size: 0.77em;">';
-			echo $data;
-			echo '</pre>';
-			break;
 		case 'raw':
 		    header('Content-type: application/x-httpd-php');
 		    die("<"."?"."php\n\n\treturn " . var_export($data, true) . ";\n\n?".">");

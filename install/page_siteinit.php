@@ -81,6 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $res = $dbm->query('SELECT COUNT(*) FROM ' . $dbm->db->prefix('users'));
     list($isadmin) = $dbm->db->fetchRow($res);
+    if ($isadmin==1)
+        $isadmin = false;
 }
 
 ob_start();
